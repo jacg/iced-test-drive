@@ -16,7 +16,7 @@ enum Message {
 }
 
 impl Sandbox for Thingy {
-    type Message = Message;
+    type Message = Option<Message>;
 
     fn new() -> Self {
         Thingy
@@ -81,7 +81,7 @@ impl Sandbox for Thingy {
 
 struct Pitch;
 
-impl Program<Message> for Pitch {
+impl Program<Option<Message>> for Pitch {
     fn draw(&self, bounds: Rectangle, cursor: Cursor) -> Vec<Geometry> {
         let ends_fraction = 0.1;
         let aspect_ratio = (1. + 2. * ends_fraction) * 27. / 16.;
