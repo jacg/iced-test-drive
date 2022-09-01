@@ -28,7 +28,9 @@ impl Sandbox for Thingy {
 
     fn view(&mut self) -> iced::Element<Self::Message> {
         let pitch = Pitch;
-        let canvas = Canvas::new(pitch);
+        let canvas = Canvas::new(pitch)
+            .height(Length::Fill)
+            .width(Length::Fill);
         let text = Text::new("2B|!2B that is the ?");
         // let row = Row::new()
         //     .push(Text::new("hello"))
@@ -37,7 +39,7 @@ impl Sandbox for Thingy {
         //     ;
 
         let column = Column::new()
-            .padding(120)
+            //.padding(120)
             .spacing(50)
             // .push(Text::new("short"))
             // .push(Text::new("veeeeeeeeeeeeeeeeeeeeeeryyyyy looooooooong"))
@@ -76,10 +78,11 @@ impl Sandbox for Thingy {
 struct Pitch;
 
 impl Program<()> for Pitch {
-    fn draw(&self, _bounds: Rectangle, _cursor: Cursor) -> Vec<Geometry> {
-        let h = 700.0; // TODO get this from the window size
+    fn draw(&self, bounds: Rectangle, cursor: Cursor) -> Vec<Geometry> {
         let ends_fraction = 0.1;
-        let w = h * (1. + ends_fraction*2.) * 27. / 16.;
+        let aspect_ratio = (1. + 2. * ends_fraction) * 27. / 16.;
+        let h = bounds.height.min(bounds.width / aspect_ratio);
+        let w = h * aspect_ratio;
         let mut frame = Frame::new(Size::new(w, h));
         let lt = 0.01 * h; // line thickness
         let hlt = lt / 2.; // half line thickness
@@ -128,6 +131,12 @@ impl Program<()> for Pitch {
         line(&mut frame, 0.5*w);
         line(&mut frame, end_w_l);
         line(&mut frame, end_w_r);
+
+        if let Some(Point { x, y }) = cursor.position_in(&bounds) {
+            let r = rect(x, y, 50., 50.);
+            draw(&mut frame, &r, colour_zone , colour_line, lt);
+        }
+
         vec![
             frame.into_geometry(),
         ]
