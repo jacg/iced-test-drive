@@ -1,6 +1,6 @@
 use iced::{Rectangle, Sandbox, Point, Size, Settings, Container, Text, Length,
-           Column, Alignment, Row, Canvas, Color,
-           canvas::{self, Cursor, Geometry, Program, Path, Frame, Stroke, path}, Button,
+           Column, Row, Canvas, Color,
+           canvas::{self, Cursor, Geometry, Program, Path, Frame, Stroke}, Button,
            button, mouse};
 
 
