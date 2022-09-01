@@ -1,25 +1,32 @@
 use iced::{Rectangle, Sandbox, Point, Size, Settings, Container, Text, Length,
            Column, Alignment, Row, Canvas, Color,
-           canvas::{self, Cursor, Geometry, Program, Path, Frame, Stroke, path}};
+           canvas::{self, Cursor, Geometry, Program, Path, Frame, Stroke, path}, Button,
+           button};
 
 
 fn main() -> iced::Result {
     Thingy::run(Settings::default())
 }
 
-struct Thingy;
+#[derive(Default)]
+struct Thingy {
+    button_a_state: button::State,
+    button_b_state: button::State,
+    pitch: Pitch,
+}
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 enum Message {
-    This,
-    That,
+    Click { x: f32, y: f32 }, // NOTE normalized coordinates TODO strong typing
+    ButtonA,
+    ButtonB,
 }
 
 impl Sandbox for Thingy {
     type Message = Option<Message>;
 
     fn new() -> Self {
-        Thingy
+        Thingy::default()
     }
 
     fn title(&self) -> String {
@@ -27,20 +34,31 @@ impl Sandbox for Thingy {
     }
 
     fn update(&mut self, message: Self::Message) {
-        todo!()
+        use Message::*;
+        if let Some(message) = message {
+            match message {
+                ButtonA => {self.pitch.draw_the_thing = true;}
+                ButtonB => {self.pitch.draw_the_thing = false;}
+                _ => ()
+            }
+        }
     }
 
     fn view(&mut self) -> iced::Element<Self::Message> {
-        let pitch = Pitch;
-        let canvas = Canvas::new(pitch)
+        let canvas = Canvas::new(self.pitch)
             .height(Length::Fill)
             .width(Length::Fill);
-        let text = Text::new("2B|!2B that is the ?");
-        // let row = Row::new()
-        //     .push(Text::new("hello"))
-        //     .push(Text::new("goodbye"))
-        //     .spacing(30)
-        //     ;
+        let row = Row::new()
+            .push(
+                Button::new(&mut self.button_a_state, Text::new("AAA"))
+                    .on_press(Some(Message::ButtonA))
+            )
+            .push(
+                Button::new(&mut self.button_b_state, Text::new("BBB"))
+                    .on_press(Some(Message::ButtonB))
+            )
+            .spacing(30)
+            ;
 
         let column = Column::new()
             //.padding(120)
@@ -49,8 +67,8 @@ impl Sandbox for Thingy {
             // .push(Text::new("veeeeeeeeeeeeeeeeeeeeeeryyyyy looooooooong"))
             // .align_items(Alignment::End)
             // .push(text)
-            // .push(row)
             .push(canvas)
+            .push(row)
             ;
         Container::new(column)
             .width(Length::Fill)
@@ -79,7 +97,10 @@ impl Sandbox for Thingy {
     // }
 }
 
-struct Pitch;
+#[derive(Default, Clone, Copy)]
+struct Pitch {
+    draw_the_thing: bool,
+}
 
 impl Program<Option<Message>> for Pitch {
     fn draw(&self, bounds: Rectangle, cursor: Cursor) -> Vec<Geometry> {
@@ -132,7 +153,7 @@ impl Program<Option<Message>> for Pitch {
         draw(&mut frame, &rect_field, colour_field, colour_line, lt);
         draw(&mut frame, &semi_zonel, colour_zone , colour_line, lt);
         draw(&mut frame, &semi_zoner, colour_zone , colour_line, lt);
-        line(&mut frame, 0.5*w);
+        if self.draw_the_thing {line(&mut frame, 0.5*w);}
         line(&mut frame, end_w_l);
         line(&mut frame, end_w_r);
 
