@@ -1,7 +1,7 @@
 use iced::{Rectangle, Sandbox, Point, Size, Settings, Container, Text, Length,
            Column, Alignment, Row, Canvas, Color,
            canvas::{self, Cursor, Geometry, Program, Path, Frame, Stroke, path}, Button,
-           button};
+           button, mouse};
 
 
 fn main() -> iced::Result {
@@ -17,7 +17,7 @@ struct Thingy {
 
 #[derive(Debug, Clone, Copy)]
 enum Message {
-    Click { x: f32, y: f32 }, // NOTE normalized coordinates TODO strong typing
+    Click(Point) , // NOTE normalized coordinates TODO strong typing
     ButtonA,
     ButtonB,
 }
@@ -37,15 +37,15 @@ impl Sandbox for Thingy {
         use Message::*;
         if let Some(message) = message {
             match message {
-                ButtonA => {self.pitch.draw_the_thing = true;}
-                ButtonB => {self.pitch.draw_the_thing = false;}
-                _ => ()
+                ButtonA  => {self.pitch.draw_the_thing = true;}
+                ButtonB  => {self.pitch.draw_the_thing = false;}
+                Click(p) => { self.pitch.markers.push(p) }
             }
         }
     }
 
     fn view(&mut self) -> iced::Element<Self::Message> {
-        let canvas = Canvas::new(self.pitch)
+        let canvas = Canvas::new(&self.pitch)
             .height(Length::Fill)
             .width(Length::Fill);
         let row = Row::new()
@@ -97,17 +97,19 @@ impl Sandbox for Thingy {
     // }
 }
 
-#[derive(Default, Clone, Copy)]
+#[derive(Default)]
 struct Pitch {
     draw_the_thing: bool,
+    markers: Vec<Point>,
 }
 
-impl Program<Option<Message>> for Pitch {
+impl Program<Option<Message>> for &Pitch {
     fn draw(&self, bounds: Rectangle, cursor: Cursor) -> Vec<Geometry> {
         let ends_fraction = 0.1;
         let aspect_ratio = (1. + 2. * ends_fraction) * 27. / 16.;
         let h = bounds.height.min(bounds.width / aspect_ratio);
         let w = h * aspect_ratio;
+        let r = h / 30.;
         let mut frame = Frame::new(Size::new(w, h));
         let lt = 0.01 * h; // line thickness
         let hlt = lt / 2.; // half line thickness
@@ -157,9 +159,11 @@ impl Program<Option<Message>> for Pitch {
         line(&mut frame, end_w_l);
         line(&mut frame, end_w_r);
 
-        if let Some(Point { x, y }) = cursor.position_in(&bounds) {
-            let r = rect(x, y, 50., 50.);
-            draw(&mut frame, &r, colour_zone , colour_line, lt);
+        if let Some(centre) = cursor.position_in(&bounds) {
+            for centre in &self.markers {
+                let c = Path::circle(*centre, r);
+                draw(&mut frame, &c, colour_zone , colour_line, lt/2.);
+            }
         }
 
         vec![
@@ -167,20 +171,40 @@ impl Program<Option<Message>> for Pitch {
         ]
     }
 
-    // fn update(
-    //     &mut self,
-    //     _event: iced::canvas::Event,
-    //     _bounds: iced::Rectangle,
-    //     _cursor: iced::canvas::Cursor,
-    // ) -> (iced::canvas::event::Status, Option<()>) {
-    //     (iced::canvas::event::Status::Ignored, None)
-    // }
+    fn update(&mut self, event: canvas::Event, bounds: Rectangle, cursor: Cursor)
+              -> (canvas::event::Status, Option<Option<Message>>)
+    {
+        use canvas::Event::*;
+        use mouse ::Event::*;
+
+        let message = match event {
+            Mouse(mouse_event) => match mouse_event {
+                ButtonPressed(mouse::Button::Left) => {
+                    cursor.position_in(&bounds)
+                        .map(Message::Click)
+                },
+                ButtonPressed(_)            => None,
+                CursorEntered               => None,
+                CursorLeft                  => None,
+                CursorMoved { position: _ } => None,
+                ButtonReleased(_)           => None,
+                WheelScrolled { delta: _ }  => None,
+            } ,
+            Keyboard(_) => None,
+        };
+        if let message@Some(_) = message {
+            (canvas::event::Status::Captured, Some(message))
+        } else {
+            (canvas::event::Status::Ignored, None)
+        }
+    }
 
     // fn mouse_interaction(
     //     &self,
-    //     _bounds: iced::Rectangle,
-    //     _cursor: iced::canvas::Cursor,
+    //     _bounds: Rectangle,
+    //     _cursor: Cursor,
     // ) -> iced_native::mouse::Interaction {
     //     iced_native::mouse::Interaction::default()
     // }
+
 }
