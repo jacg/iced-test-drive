@@ -9,7 +9,11 @@ fn main() -> iced::Result {
 
 struct Thingy;
 
-type Message = ();
+#[derive(Debug)]
+enum Message {
+    This,
+    That,
+}
 
 impl Sandbox for Thingy {
     type Message = Message;
@@ -77,7 +81,7 @@ impl Sandbox for Thingy {
 
 struct Pitch;
 
-impl Program<()> for Pitch {
+impl Program<Message> for Pitch {
     fn draw(&self, bounds: Rectangle, cursor: Cursor) -> Vec<Geometry> {
         let ends_fraction = 0.1;
         let aspect_ratio = (1. + 2. * ends_fraction) * 27. / 16.;
