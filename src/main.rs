@@ -102,7 +102,7 @@ struct Pitch {
 }
 
 impl Program<Message> for &Pitch {
-    fn draw(&self, bounds: Rectangle, cursor: Cursor) -> Vec<Geometry> {
+    fn draw(&self, bounds: Rectangle, _cursor: Cursor) -> Vec<Geometry> {
         let ends_fraction = 0.1;
         let aspect_ratio = (1. + 2. * ends_fraction) * 27. / 16.;
         let h = bounds.height.min(bounds.width / aspect_ratio);
@@ -157,11 +157,9 @@ impl Program<Message> for &Pitch {
         line(&mut frame, end_w_l);
         line(&mut frame, end_w_r);
 
-        if let Some(centre) = cursor.position_in(&bounds) {
-            for centre in &self.markers {
-                let c = Path::circle(*centre, r);
-                draw(&mut frame, &c, colour_zone , colour_line, lt/2.);
-            }
+        for centre in &self.markers {
+            let c = Path::circle(*centre, r);
+            draw(&mut frame, &c, colour_zone , colour_line, lt/2.);
         }
 
         vec![
