@@ -23,7 +23,7 @@ enum Message {
 }
 
 impl Sandbox for Thingy {
-    type Message = Option<Message>;
+    type Message = Message;
 
     fn new() -> Self {
         Thingy::default()
@@ -35,12 +35,10 @@ impl Sandbox for Thingy {
 
     fn update(&mut self, message: Self::Message) {
         use Message::*;
-        if let Some(message) = message {
-            match message {
-                ButtonA  => {self.pitch.draw_the_thing = true;}
-                ButtonB  => {self.pitch.draw_the_thing = false;}
-                Click(p) => { self.pitch.markers.push(p) }
-            }
+        match message {
+            ButtonA  => { self.pitch.draw_the_thing = true; }
+            ButtonB  => { self.pitch.draw_the_thing = false; }
+            Click(p) => { self.pitch.markers.push(p) }
         }
     }
 
@@ -51,11 +49,11 @@ impl Sandbox for Thingy {
         let row = Row::new()
             .push(
                 Button::new(&mut self.button_a_state, Text::new("AAA"))
-                    .on_press(Some(Message::ButtonA))
+                    .on_press(Message::ButtonA)
             )
             .push(
                 Button::new(&mut self.button_b_state, Text::new("BBB"))
-                    .on_press(Some(Message::ButtonB))
+                    .on_press(Message::ButtonB)
             )
             .spacing(30)
             ;
@@ -103,7 +101,7 @@ struct Pitch {
     markers: Vec<Point>,
 }
 
-impl Program<Option<Message>> for &Pitch {
+impl Program<Message> for &Pitch {
     fn draw(&self, bounds: Rectangle, cursor: Cursor) -> Vec<Geometry> {
         let ends_fraction = 0.1;
         let aspect_ratio = (1. + 2. * ends_fraction) * 27. / 16.;
@@ -172,7 +170,7 @@ impl Program<Option<Message>> for &Pitch {
     }
 
     fn update(&mut self, event: canvas::Event, bounds: Rectangle, cursor: Cursor)
-              -> (canvas::event::Status, Option<Option<Message>>)
+              -> (canvas::event::Status, Option<Message>)
     {
         use canvas::Event::*;
         use mouse ::Event::*;
@@ -193,7 +191,7 @@ impl Program<Option<Message>> for &Pitch {
             Keyboard(_) => None,
         };
         if let message@Some(_) = message {
-            (canvas::event::Status::Captured, Some(message))
+            (canvas::event::Status::Captured, message)
         } else {
             (canvas::event::Status::Ignored, None)
         }
